@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kompan - Asystent Komunikacji</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Kompan</h1>
+            <div id="status" class="status">Ładowanie...</div>
+        </header>
+
+        <main>
+            <div id="question-area" class="question-area">
+                <div id="question-text" class="question-text">
+                    Witaj! Jestem Twoim asystentem. Kliknij w dowolne miejsce, aby rozpocząć rozmowę.
+                </div>
+            </div>
+
+            <div id="response-area" class="response-area">
+                <button id="yes-btn" class="response-btn yes-btn">
+                    <span class="btn-text">TAK</span>
+                </button>
+                
+                <button id="no-btn" class="response-btn no-btn">
+                    <span class="btn-text">NIE</span>
+                </button>
+            </div>
+
+            <div id="controls" class="controls">
+                <button id="pause-btn" class="control-btn">Pauza</button>
+                <button id="restart-btn" class="control-btn">Restart</button>
+                <button id="settings-btn" class="control-btn">Ustawienia</button>
+            </div>
+        </main>
+
+        <div id="settings-panel" class="settings-panel hidden">
+            <h3>Ustawienia</h3>
+            <div class="setting-group">
+                <label for="scan-speed">Szybkość skanowania (sekundy):</label>
+                <input type="range" id="scan-speed" min="0.5" max="5" step="0.5" value="2">
+                <span id="scan-speed-value">2.0s</span>
+            </div>
+            
+            <div class="setting-group">
+                <label for="tts-engine">Silnik TTS:</label>
+                <select id="tts-engine">
+                    <option value="auto">Automatyczny</option>
+                    <option value="edge_tts">Edge TTS</option>
+                    <option value="gtts">Google TTS</option>
+                    <option value="pyttsx3">pyttsx3</option>
+                </select>
+            </div>
+            
+            <button id="close-settings" class="control-btn">Zamknij</button>
+        </div>
+
+        <div id="debug-panel" class="debug-panel">
+            <div id="debug-info"></div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
