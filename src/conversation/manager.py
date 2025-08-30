@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
+from context.user_context import UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +25,11 @@ class ConversationSession:
 class ConversationManager:
     """Manages conversation flow between Claude engine and TTS"""
     
-    def __init__(self, claude_engine, tts_handler, config: Dict[str, Any]):
+    def __init__(self, claude_engine, tts_handler, config: Dict[str, Any], user_context: UserContext = None):
         self.claude_engine = claude_engine
         self.tts_handler = tts_handler
         self.config = config
+        self.user_context = user_context or UserContext()
         self.current_session: Optional[ConversationSession] = None
         self.conversation_active = False
         
@@ -41,30 +43,32 @@ class ConversationManager:
     
     def _load_offline_patterns(self) -> List[Dict[str, str]]:
         """Load offline conversation patterns for fallback"""
+        user_name = self.user_context.get_user_name()
+        
         patterns = [
             {
-                "question": "Czy wszystko u Ciebie w porządku?",
-                "yes_followup": "Cieszę się, że masz dobry dzień. Czy chciałbyś o czymś porozmawiać?",
-                "no_followup": "Przykro mi, że nie czujesz się najlepiej. Czy mogę Ci jakoś pomóc?"
+                "question": f"Cześć {user_name}! Czy wszystko u Ciebie w porządku?",
+                "yes_followup": f"Cieszę się, że masz dobry dzień, {user_name}. Czy chciałbyś o czymś porozmawiać?",
+                "no_followup": f"Przykro mi, że nie czujesz się najlepiej, {user_name}. Czy mogę Ci jakoś pomóc?"
             },
             {
-                "question": "Czy potrzebujesz czegoś od swojego opiekuna?",
+                "question": f"Czy potrzebujesz czegoś od swojego opiekuna, {user_name}?",
                 "yes_followup": "Czy to coś pilnego?",
-                "no_followup": "Dobrze. Czy może chciałbyś po prostu porozmawiać?"
+                "no_followup": f"Dobrze, {user_name}. Czy może chciałbyś po prostu porozmawiać?"
             },
             {
-                "question": "Czy masz jakieś dolegliwości?",
+                "question": f"Czy masz jakieś dolegliwości, {user_name}?",
                 "yes_followup": "Czy to coś, z czym powinieneś skontaktować się z lekarzem?",
-                "no_followup": "To dobrze, że czujesz się komfortowo."
+                "no_followup": f"To dobrze, że czujesz się komfortowo, {user_name}."
             },
             {
-                "question": "Czy chciałbyś przekazać coś swojej rodzinie?",
+                "question": f"Czy chciałbyś przekazać coś swojej rodzinie, {user_name}?",
                 "yes_followup": "Czy to coś ważnego?",
-                "no_followup": "W porządku. Czy może masz ochotę na zwykłą rozmowę?"
+                "no_followup": f"W porządku, {user_name}. Czy może masz ochotę na zwykłą rozmowę?"
             },
             {
-                "question": "Czy jesteś zadowolony z opieki, którą otrzymujesz?",
-                "yes_followup": "To wspaniale. Czy jest coś, za co jesteś szczególnie wdzięczny?",
+                "question": f"Czy jesteś zadowolony z opieki, którą otrzymujesz, {user_name}?",
+                "yes_followup": f"To wspaniale, {user_name}. Czy jest coś, za co jesteś szczególnie wdzięczny?",
                 "no_followup": "Czy jest coś konkretnego, co mogłoby być lepsze?"
             }
         ]

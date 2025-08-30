@@ -30,6 +30,10 @@ class UserContext:
     def get_user_name(self) -> str:
         """Get user's name for conversation personalization"""
         context = self.load_user_info()
+        # Use preferred name if available, otherwise fall back to full name
+        preferred_name = context.get("user", {}).get("preferred_name")
+        if preferred_name:
+            return preferred_name
         return context.get("user", {}).get("name", "Użytkowniku")
     
     def get_user_summary(self) -> str:
@@ -37,9 +41,12 @@ class UserContext:
         context = self.load_user_info()
         user = context.get("user", {})
         
+        # Use preferred name for display
+        display_name = user.get('preferred_name') or user.get('name', 'Nieznane')
+        
         summary = f"""
         INFORMACJE O UŻYTKOWNIKU:
-        Imię: {user.get('name', 'Nieznane')}
+        Imię: {display_name}
         Wiek: {user.get('age', 'Nieznany')}
         Stan zdrowia: {user.get('condition', 'Nieznany')}
         Rodzina: {', '.join(user.get('family', {}).get('children', []))}

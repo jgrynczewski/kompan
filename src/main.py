@@ -400,9 +400,10 @@ class KompanApp:
             self.conversation_manager = ConversationManager(
                 self.claude_engine,
                 self.tts_handler,
-                self.config
+                self.config,
+                self.user_context
             )
-            logger.info("Conversation manager initialized")
+            logger.info("Conversation manager initialized with user context")
         except Exception as e:
             logger.error(f"Failed to initialize conversation manager: {e}")
         

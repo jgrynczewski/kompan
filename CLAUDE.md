@@ -184,14 +184,21 @@ CLAUDE_API_KEY=sk-ant-api03-[your-key-here]
 
 ### Deployment Strategy:
 ```bash
+# Build the image
+docker build -t kompan:latest .
+
 # Docker container with audio support
 docker run -d \
-  -p 8082:8082 \
-  -v ./data:/app/data \
-  -v ./config:/app/config \
-  --device /dev/snd \
   --name kompan \
+  -p 8082:8082 \
+  -p 8081:8081 \
+  -v "$(pwd)/data":/app/data \
+  -v "$(pwd)/config":/app/config \
+  --device /dev/snd \
   kompan:latest
+
+# Stop and remove container
+docker stop kompan && docker rm kompan
 ```
 
 ## Critical Issues to Remember

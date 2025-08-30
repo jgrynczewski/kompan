@@ -3,7 +3,7 @@ import logging
 from typing import Optional, Dict, List, Any
 from anthropic import AsyncAnthropic
 from datetime import datetime, timedelta
-from ..context.user_context import UserContext
+from context.user_context import UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class ClaudeConversationEngine:
         4. Bądź cierpliwy, empatyczny i naturalny
         5. Pamiętaj wszystkie wcześniejsze odpowiedzi w rozmowie
         6. Podsumowuj ustalenia, by {user_name} mógł je przekazać opiekunowi
-        7. Używaj imienia {user_name} w rozmowie
+        7. Używaj imienia sporadycznie, tylko gdy to naturalne - nie w każdej wypowiedzi
         
         CELE ROZMOWY:
         - Zapewnić towarzystwo i możliwość wyrażenia myśli
@@ -56,10 +56,13 @@ class ClaudeConversationEngine:
         STYL:
         - Mów naturalnie, jak przyjaciel
         - Używaj prostych, jasnych pytań
-        - Pozwól {user_name} prowadzić tematy rozmowy
+        - Pozwól osobie prowadzić tematy rozmowy
         - Bądź cierpliwy w dedukcji znaczenia
+        - Unikaj powtarzania imienia w każdym pytaniu
         
         Zawsze odpowiadaj w języku polskim i zadawaj tylko jedno pytanie na raz.
+        
+        BARDZO WAŻNE: Nigdy nie zadawaj kilku pytań w jednej wypowiedzi - użytkownik nie wie, na które odpowiadać!
         """
     
     async def start_conversation(self) -> str:
@@ -87,13 +90,14 @@ class ClaudeConversationEngine:
             3. Można na nie odpowiedzieć TAK lub NIE
             4. Nie brzmi jak ankieta medyczna
             5. Jest konkretne i angażujące
+            6. To jest TYLKO JEDNO pytanie - nie więcej!
             
             Przykłady dobrych pytań:
             - "Czy dzisiaj czujesz się lepiej niż wczoraj?"
             - "Czy miałeś przyjemny sen?"
             - "Czy cieszyś się z dzisiejszego dnia?"
             
-            Odpowiedz TYLKO pytaniem, bez dodatkowych komentarzy.
+            Odpowiedz TYLKO jednym pytaniem, bez dodatkowych komentarzy.
             """
             
             response = await self.client.messages.create(
@@ -183,8 +187,9 @@ class ClaudeConversationEngine:
         2. Pomaga lepiej zrozumieć osobę i jej potrzeby
         3. Jest przyjazne i wspierające
         4. Może być odpowiedziane TAK lub NIE
+        5. To jest TYLKO JEDNO pytanie - nie zadawaj kilku pytań naraz
         
-        Odpowiedz TYLKO pytaniem, bez dodatkowych komentarzy.
+        Odpowiedz TYLKO jednym pytaniem, bez dodatkowych komentarzy.
         """
         
         try:
