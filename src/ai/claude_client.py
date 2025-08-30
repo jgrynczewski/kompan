@@ -3,18 +3,20 @@ import logging
 from typing import Optional, Dict, List, Any
 from anthropic import AsyncAnthropic
 from datetime import datetime, timedelta
+from ..context.user_context import UserContext
 
 logger = logging.getLogger(__name__)
 
 class ClaudeConversationEngine:
-    def __init__(self, api_key: str, config: Dict[str, Any]):
+    def __init__(self, api_key: str, config: Dict[str, Any], user_context: UserContext = None):
         self.client = AsyncAnthropic(
             api_key=api_key,
             timeout=config.get("api_timeout", 10)
         )
         self.config = config
+        self.user_context = user_context or UserContext()
         self.conversation_history: List[Dict[str, str]] = []
-        self.user_context = {
+        self.conversation_context = {
             "preferences": {},
             "personal_info": {},
             "conversation_topics": [],
@@ -23,17 +25,27 @@ class ClaudeConversationEngine:
         self.current_question = None
         self.question_context = {}
         
-        # Polish system prompt for natural conversation
-        self.system_prompt = """
-        Jesteś asystentem komunikacyjnym dla osoby z poważnymi niepełnosprawnościami fizycznymi.
+        # Polish system prompt for natural conversation with user personalization
+        self.system_prompt = self._create_personalized_system_prompt()
+    
+    def _create_personalized_system_prompt(self) -> str:
+        """Create personalized system prompt with user information"""
+        user_summary = self.user_context.get_user_summary()
+        user_name = self.user_context.get_user_name()
+        
+        return f"""
+        {user_summary}
+        
+        Jesteś asystentem komunikacyjnym dla {user_name} z poważnymi niepełnosprawnościami fizycznymi.
         
         WAŻNE ZASADY:
-        1. Osoba może odpowiadać TYLKO TAK lub NIE
-        2. Prowadzisz całą rozmowę - musisz wydedukować co osoba chce przekazać
-        3. Zadawaj pytania tak, by krok po kroku zrozumieć jej myśli i potrzeby
+        1. {user_name} może odpowiadać TYLKO TAK lub NIE
+        2. Prowadzisz całą rozmowę - musisz wydedukować co {user_name} chce przekazać
+        3. Zadawaj pytania tak, by krok po kroku zrozumieć jego myśli i potrzeby
         4. Bądź cierpliwy, empatyczny i naturalny
         5. Pamiętaj wszystkie wcześniejsze odpowiedzi w rozmowie
-        6. Podsumowuj ustalenia, by osoba mogła je przekazać opiekunowi
+        6. Podsumowuj ustalenia, by {user_name} mógł je przekazać opiekunowi
+        7. Używaj imienia {user_name} w rozmowie
         
         CELE ROZMOWY:
         - Zapewnić towarzystwo i możliwość wyrażenia myśli
@@ -44,7 +56,7 @@ class ClaudeConversationEngine:
         STYL:
         - Mów naturalnie, jak przyjaciel
         - Używaj prostych, jasnych pytań
-        - Pozwól osobie prowadzić tematy rozmowy
+        - Pozwól {user_name} prowadzić tematy rozmowy
         - Bądź cierpliwy w dedukcji znaczenia
         
         Zawsze odpowiadaj w języku polskim i zadawaj tylko jedno pytanie na raz.
@@ -145,14 +157,14 @@ class ClaudeConversationEngine:
         topic = self.question_context.get("topic", "")
         
         if context_type == "greeting":
-            self.user_context["mood_indicators"].append({
+            self.conversation_context["mood_indicators"].append({
                 "timestamp": datetime.now().isoformat(),
                 "indicator": "good_day" if is_yes else "difficult_day"
             })
         
         # Track conversation topics
-        if topic and topic not in self.user_context["conversation_topics"]:
-            self.user_context["conversation_topics"].append(topic)
+        if topic and topic not in self.conversation_context["conversation_topics"]:
+            self.conversation_context["conversation_topics"].append(topic)
     
     async def _generate_next_question(self, is_yes: bool) -> str:
         """Generate next question using Claude API"""
@@ -212,12 +224,12 @@ class ClaudeConversationEngine:
             context_parts.append("")
         
         # User context
-        if self.user_context["mood_indicators"]:
-            latest_mood = self.user_context["mood_indicators"][-1]
+        if self.conversation_context["mood_indicators"]:
+            latest_mood = self.conversation_context["mood_indicators"][-1]
             context_parts.append(f"NASTRÓJ: {latest_mood['indicator']}")
         
-        if self.user_context["conversation_topics"]:
-            topics = ", ".join(self.user_context["conversation_topics"][-3:])  # Last 3 topics
+        if self.conversation_context["conversation_topics"]:
+            topics = ", ".join(self.conversation_context["conversation_topics"][-3:])  # Last 3 topics
             context_parts.append(f"OSTATNIE TEMATY: {topics}")
         
         return "\n".join(context_parts)
@@ -320,12 +332,12 @@ class ClaudeConversationEngine:
         summary.append("")
         
         # Identify main topics
-        topics = self.user_context.get("conversation_topics", [])
+        topics = self.conversation_context.get("conversation_topics", [])
         if topics:
             summary.append(f"Główne tematy: {', '.join(topics[-5:])}")
         
         # Mood indicators
-        mood_indicators = self.user_context.get("mood_indicators", [])
+        mood_indicators = self.conversation_context.get("mood_indicators", [])
         if mood_indicators:
             latest_mood = mood_indicators[-1]['indicator']
             summary.append(f"Nastrój: {latest_mood}")
@@ -336,7 +348,7 @@ class ClaudeConversationEngine:
         """Get complete conversation data for logging"""
         return {
             "conversation_history": self.conversation_history,
-            "user_context": self.user_context,
+            "conversation_context": self.conversation_context,
             "start_time": self.conversation_history[0]["timestamp"] if self.conversation_history else None,
             "end_time": datetime.now().isoformat(),
             "total_exchanges": len(self.conversation_history)
