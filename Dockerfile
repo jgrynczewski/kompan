@@ -8,6 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sox \
     libsox-fmt-mp3 \
     portaudio19-dev \
+    libglib2.0-0 \
+    libglib2.0-dev \
+    libgthread-2.0-0 \
+    alsa-utils \
     curl \
     && rm -rf /var/lib/apt/lists/*
 

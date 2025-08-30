@@ -177,11 +177,27 @@ class KompanApp {
     }
     
     handleClick() {
-        // Emergency recovery - if user clicks and system is stuck, restart scanning
+        // Emergency recovery - only if system is truly stuck for more than 10 seconds
         if (!this.config.isScanning && !this.config.isTTSSpeaking && !this.config.isPaused) {
-            this.debug('Emergency recovery: restarting scanning');
-            this.emergencyRestart();
-            return;
+            if (!this.lastActivity) {
+                this.lastActivity = Date.now();
+                this.debug('System appears idle - tracking for potential recovery');
+                // Start scanning instead of emergency restart
+                setTimeout(() => {
+                    if (!this.config.isScanning && !this.config.isTTSSpeaking) {
+                        this.debug('System idle for 5s - starting scanning');
+                        this.startScanning();
+                    }
+                }, 5000);
+                return;
+            } else if (Date.now() - this.lastActivity > 10000) {
+                this.debug('Emergency recovery: system stuck for >10s');
+                this.emergencyRestart();
+                this.lastActivity = null;
+                return;
+            }
+        } else {
+            this.lastActivity = Date.now();
         }
         
         if (this.config.isPaused || this.config.isTTSSpeaking || !this.config.isScanning) {
@@ -258,10 +274,13 @@ class KompanApp {
                 console.error('HTTP fallback failed:', error);
                 this.updateStatus('Błąd - kliknij aby spróbować ponownie', 'error');
                 
-                // Emergency recovery after 3 seconds
+                // Instead of emergency restart, just try to start scanning again
                 setTimeout(() => {
-                    this.emergencyRestart();
-                }, 3000);
+                    if (!this.config.isScanning && !this.config.isTTSSpeaking) {
+                        this.debug('Recovering from HTTP error - restarting scanning');
+                        this.startScanning();
+                    }
+                }, 2000);
             }
         }
         
