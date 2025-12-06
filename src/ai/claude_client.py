@@ -101,7 +101,7 @@ class ClaudeConversationEngine:
             """
             
             response = await self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model="claude-sonnet-4-20250514",
                 max_tokens=150,
                 temperature=0.8,
                 system=self.system_prompt,
@@ -194,7 +194,7 @@ class ClaudeConversationEngine:
         
         try:
             response = await self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model="claude-sonnet-4-20250514",
                 max_tokens=200,
                 temperature=0.7,
                 system=self.system_prompt,
@@ -306,7 +306,7 @@ class ClaudeConversationEngine:
             """
             
             response = await self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model="claude-sonnet-4-20250514",
                 max_tokens=400,
                 temperature=0.5,
                 system="Jesteś asystentem przygotowującym podsumowania rozmów dla opiekunów osób niepełnosprawnych.",
