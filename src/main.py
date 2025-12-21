@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from tts.engine import PolishTTSHandler
 from ai.claude_client import ClaudeConversationEngine
 from conversation.manager import ConversationManager
+from context.user_context import UserContext
 
 # Configure logging
 logging.basicConfig(
@@ -31,6 +32,7 @@ class KompanApp:
     def __init__(self):
         self.app = FastAPI(title="Kompan", description="AI Communication Assistant")
         self.config = self.load_config()
+        self.user_context: Optional[UserContext] = None
         self.tts_handler: Optional[PolishTTSHandler] = None
         self.claude_engine: Optional[ClaudeConversationEngine] = None
         self.conversation_manager: Optional[ConversationManager] = None
@@ -364,6 +366,13 @@ class KompanApp:
         """Startup initialization"""
         logger.info("Starting Kompan application...")
         
+        # Initialize user context
+        try:
+            self.user_context = UserContext()
+            logger.info("User context initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize user context: {e}")
+        
         # Initialize TTS
         try:
             self.tts_handler = PolishTTSHandler(self.config)
@@ -377,9 +386,10 @@ class KompanApp:
             try:
                 self.claude_engine = ClaudeConversationEngine(
                     self.config["claude_api_key"], 
-                    self.config
+                    self.config,
+                    self.user_context
                 )
-                logger.info("Claude engine initialized")
+                logger.info("Claude engine initialized with user context")
             except Exception as e:
                 logger.error(f"Failed to initialize Claude: {e}")
         else:
@@ -390,9 +400,10 @@ class KompanApp:
             self.conversation_manager = ConversationManager(
                 self.claude_engine,
                 self.tts_handler,
-                self.config
+                self.config,
+                self.user_context
             )
-            logger.info("Conversation manager initialized")
+            logger.info("Conversation manager initialized with user context")
         except Exception as e:
             logger.error(f"Failed to initialize conversation manager: {e}")
         

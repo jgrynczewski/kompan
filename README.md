@@ -69,7 +69,7 @@ After installation, you'll have these commands:
 
 ## 📱 Interface
 
-1. **Open your browser** to `http://localhost:8080`
+1. **Open your browser** to `http://localhost:8082`
 2. **Click anywhere** to start a conversation
 3. **Wait for scanning** to highlight YES or NO
 4. **Click again** when your choice is highlighted
@@ -92,7 +92,7 @@ Edit your settings file:
   "tts_engine": "auto",             // "auto", "edge_tts", "gtts", "pyttsx3"
   "language": "pl",                 // Language (Polish)
   "claude_api_key": "",             // Your Claude API key (optional)
-  "gui_port": 8080,                 // Web interface port
+  "gui_port": 8082,                 // Web interface port
   "api_port": 8081                  // API port
 }
 ```
@@ -164,10 +164,20 @@ python src/main.py
 
 ```bash
 # Build image
-docker build -t kompan:dev .
+docker build -t kompan:latest .
 
-# Run container
-docker run -p 8080:8080 -p 8081:8081 -v ./data:/app/data -v ./config:/app/config kompan:dev
+# Run container with audio support
+docker run -d \
+  --name kompan \
+  -p 8082:8082 \
+  -p 8081:8081 \
+  -v "$(pwd)/data":/app/data \
+  -v "$(pwd)/config":/app/config \
+  --device /dev/snd \
+  kompan:latest
+
+# Stop container
+docker stop kompan && docker rm kompan
 ```
 
 ## 🔍 Troubleshooting
@@ -189,7 +199,7 @@ docker run -p 8080:8080 -p 8081:8081 -v ./data:/app/data -v ./config:/app/config
 - Falls back to offline mode automatically
 
 **Web interface not loading**
-- Check if port 8080 is available
+- Check if port 8082 is available
 - Try different port in settings
 - Check firewall settings
 
